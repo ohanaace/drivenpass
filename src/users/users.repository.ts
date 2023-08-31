@@ -5,19 +5,29 @@ import { DatabaseService } from '../database/database.service';
 @Injectable()
 export class UsersRepository {
   constructor(private readonly prisma: DatabaseService) {}
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
-  }
-
+  
+  signup(data: CreateUserDto) {
+    return this.prisma.user.create({
+      data
+    });
+  };
+  
   findAll() {
     return `This action returns all users`;
   }
-
+  
   findOne(id: number) {
     return `This action returns a #${id} user`;
   }
-
+  
   remove(id: number) {
     return `This action removes a #${id} user`;
+  }
+  checkEmail(email: string) {
+    return this.prisma.user.findFirst({
+      where: {
+        email
+      }
+    });
   }
 }
