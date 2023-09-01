@@ -4,18 +4,20 @@ import { DatabaseService } from '../database/database.service';
 
 @Injectable()
 export class UsersRepository {
-  constructor(private readonly prisma: DatabaseService) {}
-  
+  constructor(private readonly prisma: DatabaseService) { }
+
   signup(data: CreateUserDto) {
     return this.prisma.user.create({
       data
     });
   };
-  
+
   findOne(id: number) {
-    return `This action returns a #${id} user`;
+    return this.prisma.user.findUnique({
+      where: { id }
+    });
   }
-  
+
   remove(id: number) {
     return `This action removes a #${id} user`;
   }

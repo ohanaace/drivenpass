@@ -48,8 +48,10 @@ export class UsersService {
     return bcrypt.hashSync(password, saltRounds);
   };
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+ async findOne(id: number) {
+    const user = await this.repository.findOne(id);
+    delete user.password;
+    return user;
   }
 
   remove(id: number) {
@@ -57,14 +59,21 @@ export class UsersService {
   }
 
   private async generateToken(user: User) {
-    const { id } = user;
+    const { id, email } = user;
 
-    const token = this.jwtService.sign({ id }, {
+    const token = this.jwtService.sign({ email }, {
       expiresIn: this.EXPIRATION_TIME,
       issuer: this.ISSUER,
-      audience: this.AUDIENCE
+      audience: this.AUDIENCE,
+      subject: String(id)
     });
 
     return { token }
+  }
+  checkToken(token: string) {
+    return this.jwtService.verify(token,
+      {
+        secret: process.env.JWT_SECRET
+      });
   }
 }
