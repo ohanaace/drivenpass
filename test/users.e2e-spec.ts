@@ -1,12 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { DatabaseService } from './../src/database/database.service';
 import { DatabaseModule } from '../src/database/database.module';
 import { E2EUtils } from './utils/e2e-utils';
 import { CreateUserDto } from '../src/users/dto/create-user.dto';
 import { UserFactory } from './factories/users-factory';
+import * as request from 'supertest';
+import { faker } from "@faker-js/faker";
+import { SignInDto } from '../src/users/dto/sign-in.dto';
 
 describe('UsersController (e2e)', () => {
   let app: INestApplication;
@@ -29,10 +31,13 @@ describe('UsersController (e2e)', () => {
     await prisma.$disconnect();
   });
 
-  it('should create a new user', async () => {
+  it('POST /sign-up => should create a new user', async () => {
     const userDTO: CreateUserDto = new CreateUserDto({
-      email: 'umemaildeteste@emailteste.com',
-      password: 'um4_s3Nh5--b@m-f0rt3!'
+      email: faker.internet.email(),
+      password: faker.internet.password({
+        length: 10,
+        prefix: 'aZ1_'
+      })
     });
 
     await request(app.getHttpServer())
@@ -52,7 +57,7 @@ describe('UsersController (e2e)', () => {
     })
   })
 
-  it('should respond with status 400 if data is missing', async () => {
+  it('POST /sign-up => should respond with 400 if data is missing', async () => {
     const userDTO = new CreateUserDto();
 
     const response = await request(app.getHttpServer())
@@ -63,20 +68,97 @@ describe('UsersController (e2e)', () => {
     expect(status).toBe(HttpStatus.BAD_REQUEST);
   });
 
-  it('should respond with status 409 if email is already in use', async () => {
+  it('POST /sign-up => should respond with 409 if email is already in use', async () => {
     const signedUpUser = await new UserFactory(prisma)
-      .withEmail('umemaildeteste@emailteste.com')
-      .withPassword('um4_s3Nh5--b@m-f0rt3!')
+      .withEmail(faker.internet.email())
+      .withPassword(faker.internet.password({
+        length: 10,
+        prefix: 'aZ1_'
+      }))
       .persist();
 
     const userDTO: CreateUserDto = new CreateUserDto({
       email: signedUpUser.email,
-      password: 'um4_s3Nh5--p0ko-f0rt3!'
+      password: faker.internet.password({
+        length: 10,
+        prefix: 'aZ1_'
+      })
     });
 
     await request(app.getHttpServer())
       .post('/users/sign-up')
       .send(userDTO)
       .expect(HttpStatus.CONFLICT);
+  });
+
+  it('POST /sign-in => should generate a new token', async () => {
+    const userDTO: CreateUserDto = new CreateUserDto({
+      email: faker.internet.email(),
+      password: faker.internet.password({
+        length: 10,
+        prefix: 'aZ1_'
+      })
+    });
+
+    await request(app.getHttpServer())
+      .post('/users/sign-up')
+      .send(userDTO)
+
+    const signInUser: SignInDto = {
+      email: userDTO.email,
+      password: userDTO.password
+    };
+
+    const response = await request(app.getHttpServer())
+      .post('/users/sign-in')
+      .send(signInUser)
+      .expect(HttpStatus.OK)
+
+    const { body } = response;
+
+    expect(body).toEqual({
+      token: expect.any(String)
+    });
+  });
+
+  it('POST /sign-in => should respond with 401 if user is not in DB', async () => {
+    const signInUser: SignInDto = {
+      email: faker.internet.email(),
+      password: faker.internet.password({
+        length: 10,
+        prefix: 'aZ1_'
+      })
+    };
+
+    await request(app.getHttpServer())
+      .post('/users/sign-in')
+      .send(signInUser)
+      .expect(HttpStatus.UNAUTHORIZED)
+  });
+
+  it('POST /sign-in => should respond with 401 if password is incorrect', async () => {
+    const userDTO: CreateUserDto = new CreateUserDto({
+      email: faker.internet.email(),
+      password: faker.internet.password({
+        length: 10,
+        prefix: 'aZ1_'
+      })
+    });
+
+    await request(app.getHttpServer())
+      .post('/users/sign-up')
+      .send(userDTO)
+
+    const signInUser: SignInDto = {
+      email: userDTO.email,
+      password: faker.internet.password({
+        length: 10,
+        prefix: 'aZ1_'
+      })
+    };
+    await request(app.getHttpServer())
+    .post('/users/sign-in')
+    .send(signInUser)
+    .expect(HttpStatus.UNAUTHORIZED)
   });
 });
