@@ -10,6 +10,7 @@ import { TokenFactory } from "../factories/token-factory";
 import { JwtService } from "@nestjs/jwt";
 import { CreateNoteDto } from "../../src/notes/dto/create-note.dto";
 import * as request from 'supertest';
+import { NotesFactory } from "../factories/notes-factory";
 
 describe('NotesController (e2e)', () => {
     let app: INestApplication;
@@ -94,7 +95,7 @@ describe('NotesController (e2e)', () => {
             .expect(HttpStatus.BAD_REQUEST);
     });
 
-    it('POST /notes => should respond with 403 if no valid token is provided',async () => {
+    it('POST /notes => should respond with 403 if no valid token is provided', async () => {
         const token = faker.lorem.sentence()
 
         const noteDto: CreateNoteDto = {
@@ -103,9 +104,41 @@ describe('NotesController (e2e)', () => {
         };
 
         await request(app.getHttpServer())
+            .post('/notes')
+            .set("Authorization", `Bearer ${token}`)
+            .send(noteDto)
+            .expect(HttpStatus.FORBIDDEN);
+    });
+
+    it('POST /notes => should respond with 409 if user tries to post multiple notes with same title', async () => {
+        const user = await new UserFactory(prisma)
+            .withEmail(faker.internet.email())
+            .withPassword(faker.internet.password({
+                length: 10,
+                prefix: 'aZ1_'
+            }))
+            .persist();
+
+        const token = new TokenFactory(jwt)
+            .withEmail(user.email)
+            .withUserId(user.id)
+            .generate();
+
+        const savedNote = await new NotesFactory(prisma)
+            .withTitle(faker.lorem.word())
+            .withText(faker.lorem.word())
+            .withUserId(user.id)
+            .persist();
+
+        const conflictedNote: CreateNoteDto = {
+            title: savedNote.title,
+            text: faker.lorem.paragraph()
+        };
+
+        await request(app.getHttpServer())
         .post('/notes')
-        .set("Authorization", `Bearer ${token}`)
-        .send(noteDto)
-        .expect(HttpStatus.FORBIDDEN);
-    })
+        .set('Authorization', `Bearer ${token}`)
+        .send(conflictedNote)
+        .expect(HttpStatus.CONFLICT);
+    });
 });
