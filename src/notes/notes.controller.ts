@@ -2,6 +2,8 @@ import { Controller, Get, Post, Body, Param, Delete, UseGuards } from '@nestjs/c
 import { NotesService } from './notes.service';
 import { CreateNoteDto } from './dto/create-note.dto';
 import { AuthGuard } from '../guards/auth-guard';
+import { UserInfo } from '../decorators/auth-decorator';
+import { User} from '@prisma/client';
 
 @UseGuards(AuthGuard)
 @Controller('notes')
@@ -9,8 +11,8 @@ export class NotesController {
   constructor(private readonly notesService: NotesService) {}
 
   @Post()
-  create(@Body() createNoteDto: CreateNoteDto) {
-    return this.notesService.create(createNoteDto);
+  create(@Body() createNoteDto: CreateNoteDto, @UserInfo() user: Partial<User> ) {
+    return this.notesService.create(createNoteDto, user);
   }
 
   @Get()

@@ -1,10 +1,24 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { CreateNoteDto } from './dto/create-note.dto';
+import { User } from '@prisma/client';
+import { NotesRepository } from './notes.repository';
 
 @Injectable()
 export class NotesService {
-  create(createNoteDto: CreateNoteDto) {
-    return 'This action adds a new note';
+
+constructor(private readonly repository: NotesRepository) {}
+
+ async create(createNoteDto: CreateNoteDto, user: Partial<User>) {
+  const {title} = createNoteDto;
+  const { id } = user;
+  
+  await this.findByTitleAndUserId(title, id);    
+  
+  return await this.repository.create(createNoteDto, id);
+  }
+ private async findByTitleAndUserId(title: string, id: number) {
+   const conflictedNote = await this.repository.findByTitleAndUserId(title, id);
+   if(conflictedNote) throw new ConflictException();
   }
 
   findAll() {

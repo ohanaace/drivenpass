@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
-import { AppModule } from './../src/app.module';
-import { DatabaseService } from './../src/database/database.service';
-import { DatabaseModule } from '../src/database/database.module';
-import { E2EUtils } from './utils/e2e-utils';
-import { CreateUserDto } from '../src/users/dto/create-user.dto';
-import { UserFactory } from './factories/users-factory';
+import { AppModule } from '../../src/app.module';
+import { DatabaseService } from '../../src/database/database.service';
+import { DatabaseModule } from '../../src/database/database.module';
+import { E2EUtils } from '../utils/e2e-utils';
+import { CreateUserDto } from '../../src/users/dto/create-user.dto';
+import { UserFactory } from '../factories/users-factory';
 import * as request from 'supertest';
 import { faker } from "@faker-js/faker";
-import { SignInDto } from '../src/users/dto/sign-in.dto';
+import { SignInDto } from '../../src/users/dto/sign-in.dto';
 
 describe('UsersController (e2e)', () => {
   let app: INestApplication;

@@ -11,7 +11,7 @@ export class UsersService {
 
   private EXPIRATION_TIME = '7 days';
   private ISSUER = 'Driven-pass';
-  private AUDIENCE = 'users'
+  private AUDIENCE = 'users';
 
   constructor(private readonly repository: UsersRepository,
     private readonly jwtService: JwtService) { }
