@@ -5,21 +5,47 @@ import { DatabaseService } from '../database/database.service';
 @Injectable()
 export class CredentialsRepository {
 
-  constructor(private readonly prisma: DatabaseService) {}
+  constructor(private readonly prisma: DatabaseService) { }
 
-  create(createCredentialDto: CreateCredentialDto) {
-    return 'This action adds a new credential';
-  }
+  create(createCredentialDto: CreateCredentialDto, userId: number) {
+    const data = { ...createCredentialDto, userId }
+    return this.prisma.credential.create({
+      data
+    });
+  };
 
-  findAll() {
-    return `This action returns all credentials`;
+  findAll(userId: number) {
+    return this.prisma.credential.findMany({
+      where: {
+        userId
+      }
+    });
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} credential`;
+    return this.prisma.credential.findFirst({
+      where: {
+        id
+      }
+    })
   }
 
   remove(id: number) {
-    return `This action removes a #${id} credential`;
+    return this.prisma.credential.delete({
+      where: {
+        id
+      }
+    });
+  }
+
+  findByLabelAndUserId(label: string, userId: number) {
+    return this.prisma.credential.findUnique({
+      where: {
+        label_userId: {
+          label,
+          userId
+        }
+      }
+    })
   }
 }
