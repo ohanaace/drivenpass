@@ -161,6 +161,35 @@ describe('CardsController (e2e)', () => {
             .expect(HttpStatus.CONFLICT)
     });
 
+    it('POST /cards => should return 403 if no valid token is provided',async () => {
+        const user = await new UserFactory(prisma)
+            .withEmail(faker.internet.email())
+            .withPassword(faker.internet.password({
+                length: 10,
+                prefix: 'aZ1_'
+            }))
+            .persist();
+
+        const token = faker.lorem.sentence()
+
+        const card: CreateCardDto = new CreateCardDto({
+            label: faker.lorem.word(),
+            cardNumber: faker.number.bigInt({ min: 1000000000000000, max: 9999999999999999n }).toString(),
+            cardOwner: faker.person.fullName(),
+            virtual: faker.datatype.boolean(),
+            password: faker.number.int().toString(),
+            expirationDate: format(faker.date.future(), 'yyyy-MM-dd'),
+            cvc: faker.number.int({ min: 100, max: 999 }).toString(),
+            CardType: 'CREDIT'
+        });
+
+        await request(app.getHttpServer())
+            .post('/cards')
+            .set('Authorization', `Bearer ${token}`)
+            .send(card)
+            .expect(HttpStatus.FORBIDDEN)
+    })
+
     it('GET /cards => should return all cards from user', async () => {
         const user = await new UserFactory(prisma)
             .withEmail(faker.internet.email())
