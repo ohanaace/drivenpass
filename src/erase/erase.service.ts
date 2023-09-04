@@ -1,5 +1,4 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { EraseRepository } from './erase.repository';
 import { CredentialsService } from '../credentials/credentials.service';
 import { CardsService } from '../cards/cards.service';
 import { NotesService } from '../notes/notes.service';
@@ -10,7 +9,6 @@ import { CreateEraseDto } from './dto/create-erase.dto';
 @Injectable()
 export class EraseService {
   constructor(
-    private readonly repository: EraseRepository,
     private readonly credentials: CredentialsService,
     private readonly cards: CardsService,
     private readonly notes: NotesService,
