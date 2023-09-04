@@ -5,6 +5,7 @@ import { DatabaseService } from '../database/database.service';
 @Injectable()
 export class CardsRepository {
   
+  
   constructor(private readonly prisma: DatabaseService) {}
   
   create(createCardDto: CreateCardDto, userId: number) {
@@ -38,7 +39,15 @@ export class CardsRepository {
       }
     });
   }
- 
+  
+  removeAll(userId: number) {
+    return this.prisma.card.deleteMany({
+      where: {
+        userId
+      }
+    });
+  }
+  
   findByLabelAndUserId(label: string, userId: number) {
     return this.prisma.card.findUnique({
       where: {

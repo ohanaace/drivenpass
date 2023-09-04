@@ -19,7 +19,11 @@ export class UsersRepository {
   }
 
   remove(id: number) {
-    return `This action removes a #${id} user`;
+    return this.prisma.user.delete({
+      where: {
+        id
+      }
+    });
   }
   checkEmail(email: string) {
     return this.prisma.user.findFirst({

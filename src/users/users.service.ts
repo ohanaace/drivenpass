@@ -36,7 +36,7 @@ export class UsersService {
     return this.generateToken(user)
   }
 
-  private verifyPassword(password: string, databasePassword: string) {
+   verifyPassword(password: string, databasePassword: string) {
     return bcrypt.compareSync(password, databasePassword);
   }
 
@@ -54,8 +54,13 @@ export class UsersService {
     return user;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: number) {
+    return await this.repository.remove(id);
+  }
+
+  async findOneWithPassword(id: number) {
+    const user = await this.repository.findOne(id);
+    return user;
   }
 
   private async generateToken(user: User) {

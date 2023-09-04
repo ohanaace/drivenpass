@@ -1,6 +1,5 @@
 import { Global, Module, Provider } from '@nestjs/common';
 import { CryptrService } from './cryptr.service';
-import Cryptr from 'cryptr';
 
 
 @Global()

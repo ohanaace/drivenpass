@@ -6,23 +6,23 @@ import { CryptrService } from '../cryptr/cryptr.service';
 
 @Injectable()
 export class CredentialsService {
-
+  
   constructor(
     private readonly repository: CredentialsRepository,
     private readonly cryptr: CryptrService) { }
-
-  async create(createCredentialDto: CreateCredentialDto, user: Partial<User>) {
-    const { label, password } = createCredentialDto
+    
+    async create(createCredentialDto: CreateCredentialDto, user: Partial<User>) {
+      const { label, password } = createCredentialDto
     const { id } = user;
-
+    
     await this.findByLabelAndUserId(label, id);
     const hashPassword = this.cryptr.encryptData(password);
     const body = { ...createCredentialDto, password: hashPassword }
-
+    
     return await this.repository.create(body, id);
   }
-
-
+  
+  
   async findAll(user: Partial<User>) {
     const { id } = user;
     const credentials = await this.repository.findAll(id);
@@ -34,7 +34,7 @@ export class CredentialsService {
     });
     return responseCredentials;
   }
-
+  
   async findOne(id: number, user: Partial<User>) {
     const credential = await this.repository.findOne(id);
     if (!credential) throw new NotFoundException()
@@ -45,8 +45,12 @@ export class CredentialsService {
   }
   async remove(id: number, user: Partial<User>) {
     await this.findOne(id, user);
-
+    
     return await this.repository.remove(id);
+  }
+  
+  async removeAll(userId: number) {
+    return await this.repository.removeAll(userId)
   }
 
   private async findByLabelAndUserId(label: string, id: number) {

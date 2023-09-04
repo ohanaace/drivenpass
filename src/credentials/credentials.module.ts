@@ -5,6 +5,7 @@ import { CredentialsRepository } from './credentials.repository';
 
 @Module({
   controllers: [CredentialsController],
-  providers: [CredentialsService, CredentialsRepository]
+  providers: [CredentialsService, CredentialsRepository],
+  exports: [CredentialsService]
 })
 export class CredentialsModule {}

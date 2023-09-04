@@ -4,9 +4,9 @@ import { DatabaseService } from '../database/database.service';
 
 @Injectable()
 export class CredentialsRepository {
-
+  
   constructor(private readonly prisma: DatabaseService) { }
-
+  
   create(createCredentialDto: CreateCredentialDto, userId: number) {
     const data = { ...createCredentialDto, userId }
     return this.prisma.credential.create({
@@ -21,7 +21,7 @@ export class CredentialsRepository {
       }
     });
   }
-
+  
   findOne(id: number) {
     return this.prisma.credential.findFirst({
       where: {
@@ -38,6 +38,14 @@ export class CredentialsRepository {
     });
   }
 
+  removeAll(userId: number) {
+    return this.prisma.credential.deleteMany({
+      where: {
+        userId
+      }
+    });
+  }
+  
   findByLabelAndUserId(label: string, userId: number) {
     return this.prisma.credential.findUnique({
       where: {

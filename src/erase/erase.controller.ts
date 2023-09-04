@@ -1,12 +1,17 @@
-import { Controller, Param, Delete } from '@nestjs/common';
+import { Controller, Param, Delete, UseGuards, Body } from '@nestjs/common';
 import { EraseService } from './erase.service';
+import { AuthGuard } from '../guards/auth-guard';
+import { User } from '@prisma/client';
+import { UserInfo } from '../decorators/auth-decorator';
+import { CreateEraseDto } from './dto/create-erase.dto';
 
+@UseGuards(AuthGuard)
 @Controller('erase')
 export class EraseController {
   constructor(private readonly eraseService: EraseService) {}
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.eraseService.remove(+id);
+  @Delete()
+  remove(@Body() password: CreateEraseDto, @UserInfo() user: Partial<User>) {
+    return this.eraseService.remove(user, password);
   }
 }

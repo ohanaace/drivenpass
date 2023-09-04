@@ -1,11 +1,30 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { EraseRepository } from './erase.repository';
+import { CredentialsService } from '../credentials/credentials.service';
+import { CardsService } from '../cards/cards.service';
+import { NotesService } from '../notes/notes.service';
+import { UsersService } from '../users/users.service';
+import { User } from '@prisma/client';
+import { CreateEraseDto } from './dto/create-erase.dto';
 
 @Injectable()
 export class EraseService {
-  constructor(private readonly repository: EraseRepository) { }
+  constructor(
+    private readonly repository: EraseRepository,
+    private readonly credentials: CredentialsService,
+    private readonly cards: CardsService,
+    private readonly notes: NotesService,
+    private readonly user: UsersService) { }
 
-  remove(id: number) {
-    return `This action removes a #${id} erase`;
+  async remove(user: Partial<User>, createEraseDto: CreateEraseDto) {
+    const { password } = createEraseDto;
+    const userPassword = await this.user.findOneWithPassword(user.id)
+    const correctPassword = this.user.verifyPassword(password, userPassword.password)
+    if (!correctPassword) throw new ForbiddenException('incorrect password');
+
+    await this.cards.removeAll(user.id);
+    await this.credentials.removeAll(user.id);
+    await this.notes.removeAll(user.id);
+   return await this.user.remove(user.id);
   }
 }

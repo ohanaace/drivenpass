@@ -4,16 +4,16 @@ import { DatabaseService } from '../database/database.service';
 
 @Injectable()
 export class NotesRepository {
-
+  
   constructor(private readonly prisma: DatabaseService) { }
-
+  
   create(createNoteDto: CreateNoteDto, userId: number) {
     const data = { ...createNoteDto, userId }
     return this.prisma.note.create({
       data
     });
   };
-
+  
   findAll(userId: number) {
     return this.prisma.note.findMany({
       where: {
@@ -21,7 +21,7 @@ export class NotesRepository {
       }
     });
   }
-
+  
   findOne(id: number) {
     return this.prisma.note.findUnique({
       where: {
@@ -29,7 +29,7 @@ export class NotesRepository {
       }
     });
   }
-
+  
   remove(id: number) {
     return this.prisma.note.delete({
       where: {
@@ -37,7 +37,15 @@ export class NotesRepository {
       }
     });
   };
-
+  
+  removeAll(userId: number) {
+    return this.prisma.note.deleteMany({
+      where: {
+        userId
+      }
+    });
+  };
+  
   findByTitleAndUserId(title: string, userId: number) {
     return this.prisma.note.findUnique({
       where: {
