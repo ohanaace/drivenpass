@@ -51,12 +51,12 @@ model Note {
 model Card {
   id             Int      @id @default(autoincrement())
   label          String
-  cardNumber     Int
+  cardNumber     String
   cardOwner      String
-  expirationDate DateTime
-  cvc            Int
+  expirationDate String
+  cvc            String
   virtual        Boolean
-  password       Int
+  password       String
   CardType       CardType
   userId         Int
   User           User     @relation(fields: [userId], references: [id])

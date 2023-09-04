@@ -4,22 +4,49 @@ import { DatabaseService } from '../database/database.service';
 
 @Injectable()
 export class CardsRepository {
-
+  
   constructor(private readonly prisma: DatabaseService) {}
-
-  create(createCardDto: CreateCardDto) {
-    return 'This action adds a new card';
+  
+  create(createCardDto: CreateCardDto, userId: number) {
+    return this.prisma.card.create({
+      data: {
+        ...createCardDto, userId
+      }
+    })
   }
-
-  findAll() {
-    return `This action returns all cards`;
+  
+  findAll(userId: number) {
+    return this.prisma.card.findMany({
+      where: {
+        userId
+      }
+    });
   }
-
+  
   findOne(id: number) {
-    return `This action returns a #${id} card`;
+    return this.prisma.card.findFirst({
+      where: {
+        id
+      }
+    });
   }
-
+  
   remove(id: number) {
-    return `This action removes a #${id} card`;
+    return this.prisma.card.delete({
+      where: {
+        id
+      }
+    });
+  }
+ 
+  findByLabelAndUserId(label: string, userId: number) {
+    return this.prisma.card.findUnique({
+      where: {
+        userId_label: {
+          userId,
+          label
+        }
+      }
+    });
   }
 }
