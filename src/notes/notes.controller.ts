@@ -21,12 +21,12 @@ export class NotesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.notesService.findOne(+id);
+  findOne(@Param('id') id: string, @UserInfo() user: Partial<User>) {
+    return this.notesService.findOne(+id, user);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.notesService.remove(+id);
+  remove(@Param('id') id: string, @UserInfo() user: Partial<User>) {
+    return this.notesService.remove(+id, user);
   }
 }

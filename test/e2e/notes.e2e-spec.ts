@@ -136,9 +136,305 @@ describe('NotesController (e2e)', () => {
         };
 
         await request(app.getHttpServer())
-        .post('/notes')
+            .post('/notes')
+            .set("Authorization", `Bearer ${token}`)
+            .send(conflictedNote)
+            .expect(HttpStatus.CONFLICT);
+    });
+
+    it('GET /notes => should return all notes from user', async () => {
+        const user = await new UserFactory(prisma)
+            .withEmail(faker.internet.email())
+            .withPassword(faker.internet.password({
+                length: 10,
+                prefix: 'aZ1_'
+            }))
+            .persist();
+
+        const token = new TokenFactory(jwt)
+            .withEmail(user.email)
+            .withUserId(user.id)
+            .generate();
+
+        await new NotesFactory(prisma)
+            .withTitle(faker.lorem.word())
+            .withText(faker.lorem.word())
+            .withUserId(user.id)
+            .persist();
+
+        await new NotesFactory(prisma)
+            .withTitle(faker.lorem.sentence())
+            .withText(faker.lorem.word())
+            .withUserId(user.id)
+            .persist();
+
+        const response = await request(app.getHttpServer())
+            .get('/notes')
+            .set('Authorization', `Bearer ${token}`)
+            .expect(HttpStatus.OK);
+
+        const { body } = response;
+        expect(body).toHaveLength(2);
+        console.log(body[0])
+        expect(body[0]).toEqual({
+            id: expect.any(Number),
+            title: expect.any(String),
+            text: expect.any(String),
+            userId: user.id,
+            createdAt: expect.any(String)
+        });
+    });
+
+    it('GET /notes => should return an empty array if user does not have notes', async () => {
+        const user = await new UserFactory(prisma)
+            .withEmail(faker.internet.email())
+            .withPassword(faker.internet.password({
+                length: 10,
+                prefix: 'aZ1_'
+            }))
+            .persist();
+
+        const token = new TokenFactory(jwt)
+            .withEmail(user.email)
+            .withUserId(user.id)
+            .generate();
+
+        await request(app.getHttpServer())
+            .get('/notes')
+            .set('Authorization', `Bearer ${token}`)
+            .expect(HttpStatus.OK)
+            .expect([])
+    });
+
+    it('GET /notes => should respond with 403 if user has no valid token', async () => {
+        const token = faker.lorem.word()
+
+        await request(app.getHttpServer())
+            .get('/notes')
+            .set('Authorization', `Bearer ${token}`)
+            .expect(HttpStatus.FORBIDDEN);
+    });
+
+    it('GET /notes/:id => should return a note that belongs to user', async () => {
+        const user = await new UserFactory(prisma)
+            .withEmail(faker.internet.email())
+            .withPassword(faker.internet.password({
+                length: 10,
+                prefix: 'aZ1_'
+            }))
+            .persist();
+
+        const token = new TokenFactory(jwt)
+            .withEmail(user.email)
+            .withUserId(user.id)
+            .generate();
+
+        const note = await new NotesFactory(prisma)
+            .withTitle(faker.lorem.word())
+            .withText(faker.lorem.word())
+            .withUserId(user.id)
+            .persist();
+
+        await request(app.getHttpServer())
+            .get(`/notes/${note.id}`)
+            .set('Authorization', `Bearer ${token}`)
+            .expect(HttpStatus.OK)
+            .expect({
+                id: note.id,
+                title: note.title,
+                text: note.text,
+                userId: note.userId,
+                createdAt: note.createdAt.toISOString()
+            });
+    });
+
+    it('GET /notes/:id => should return 403 if note does not belong to user', async () => {
+        const user = await new UserFactory(prisma)
+            .withEmail(faker.internet.email())
+            .withPassword(faker.internet.password({
+                length: 10,
+                prefix: 'aZ1_'
+            }))
+            .persist();
+
+        const note = await new NotesFactory(prisma)
+            .withTitle(faker.lorem.word())
+            .withText(faker.lorem.word())
+            .withUserId(user.id)
+            .persist();
+
+        const userWithoutNote = await new UserFactory(prisma)
+            .withEmail(faker.internet.email())
+            .withPassword(faker.internet.password({
+                length: 10,
+                prefix: 'aZ1_'
+            }))
+            .persist();
+
+        const token = new TokenFactory(jwt)
+            .withEmail(userWithoutNote.email)
+            .withUserId(userWithoutNote.id)
+            .generate();
+
+        await request(app.getHttpServer())
+            .get(`/notes/${note.id}`)
+            .set('Authorization', `Bearer ${token}`)
+            .expect(HttpStatus.FORBIDDEN);
+
+    });
+
+    it('GET /notes/:id => should return 404 if note does not exist', async () => {
+        const user = await new UserFactory(prisma)
+            .withEmail(faker.internet.email())
+            .withPassword(faker.internet.password({
+                length: 10,
+                prefix: 'aZ1_'
+            }))
+            .persist();
+
+        const token = new TokenFactory(jwt)
+            .withEmail(user.email)
+            .withUserId(user.id)
+            .generate();
+
+        await request(app.getHttpServer())
+            .get(`/notes/1`)
+            .set('Authorization', `Bearer ${token}`)
+            .expect(HttpStatus.NOT_FOUND)
+    });
+
+    it('GET /notes/:id => should return 403 if no valid token is given',async () => {
+        const user = await new UserFactory(prisma)
+        .withEmail(faker.internet.email())
+        .withPassword(faker.internet.password({
+            length: 10,
+            prefix: 'aZ1_'
+        }))
+        .persist();
+
+    const token = faker.lorem.sentence()
+
+        const note = await new NotesFactory(prisma)
+        .withTitle(faker.lorem.word())
+        .withText(faker.lorem.word())
+        .withUserId(user.id)
+        .persist();
+
+    await request(app.getHttpServer())
+        .get(`/notes/${note.id}`)
         .set('Authorization', `Bearer ${token}`)
-        .send(conflictedNote)
-        .expect(HttpStatus.CONFLICT);
+        .expect(HttpStatus.FORBIDDEN) 
+    });
+
+    it('DELETE /notes/:id => should delete a note that belongs to user', async () => {
+        const user = await new UserFactory(prisma)
+            .withEmail(faker.internet.email())
+            .withPassword(faker.internet.password({
+                length: 10,
+                prefix: 'aZ1_'
+            }))
+            .persist();
+
+        const token = new TokenFactory(jwt)
+            .withEmail(user.email)
+            .withUserId(user.id)
+            .generate();
+
+        const note = await new NotesFactory(prisma)
+            .withTitle(faker.lorem.word())
+            .withText(faker.lorem.word())
+            .withUserId(user.id)
+            .persist();
+
+        await request(app.getHttpServer())
+            .delete(`/notes/${note.id}`)
+            .set('Authorization', `Bearer ${token}`)
+            .expect(HttpStatus.OK)
+
+        const deletedNote = await prisma.note.findFirst({
+            where: {
+                id: note.id
+            }
+        })
+
+        expect(deletedNote).toBe(null)
+    });
+
+    it('DELETE /notes/:id => should return 404 if note does not exist', async () => {
+        const user = await new UserFactory(prisma)
+            .withEmail(faker.internet.email())
+            .withPassword(faker.internet.password({
+                length: 10,
+                prefix: 'aZ1_'
+            }))
+            .persist();
+
+        const token = new TokenFactory(jwt)
+            .withEmail(user.email)
+            .withUserId(user.id)
+            .generate();
+
+        await request(app.getHttpServer())
+            .delete(`/notes/1`)
+            .set('Authorization', `Bearer ${token}`)
+            .expect(HttpStatus.NOT_FOUND)
+    });
+
+    it('DELETE /notes/:id => should return 403 if note does not belong to user',async () => {
+        const user = await new UserFactory(prisma)
+        .withEmail(faker.internet.email())
+        .withPassword(faker.internet.password({
+            length: 10,
+            prefix: 'aZ1_'
+        }))
+        .persist();
+
+        const userWithoutNote = await new UserFactory(prisma)
+        .withEmail(faker.internet.email())
+        .withPassword(faker.internet.password({
+            length: 10,
+            prefix: 'aZ1_'
+        }))
+        .persist();
+
+
+    const token = new TokenFactory(jwt)
+        .withEmail(userWithoutNote.email)
+        .withUserId(userWithoutNote.id)
+        .generate();
+
+        const note = await new NotesFactory(prisma)
+        .withTitle(faker.lorem.word())
+        .withText(faker.lorem.word())
+        .withUserId(user.id)
+        .persist();
+
+    await request(app.getHttpServer())
+        .delete(`/notes/${note.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(HttpStatus.FORBIDDEN)
+    });
+
+    it('DELETE /notes/:id => should return 403 if no valid token is given',async () => {
+        const user = await new UserFactory(prisma)
+        .withEmail(faker.internet.email())
+        .withPassword(faker.internet.password({
+            length: 10,
+            prefix: 'aZ1_'
+        }))
+        .persist();
+
+    const token = faker.lorem.sentence()
+
+        const note = await new NotesFactory(prisma)
+        .withTitle(faker.lorem.word())
+        .withText(faker.lorem.word())
+        .withUserId(user.id)
+        .persist();
+
+    await request(app.getHttpServer())
+        .delete(`/notes/${note.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(HttpStatus.FORBIDDEN) 
     });
 });

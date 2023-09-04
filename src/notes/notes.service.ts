@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateNoteDto } from './dto/create-note.dto';
 import { User } from '@prisma/client';
 import { NotesRepository } from './notes.repository';
@@ -21,16 +21,22 @@ export class NotesService {
     if (conflictedNote) throw new ConflictException();
   }
 
- async findAll(user: Partial<User>) {
+  async findAll(user: Partial<User>) {
     const { id } = user;
     return await this.repository.findAll(id)
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} note`;
+  async findOne(id: number, user: Partial<User>) {
+    const userId = user.id;
+    const note = await this.repository.findOne(id);
+    if (!note) throw new NotFoundException();
+    if (note.userId !== userId) throw new ForbiddenException();
+
+    return note;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} note`;
+ async remove(id: number, user: Partial<User>) {
+    await this.findOne(id, user);
+    return await this.repository.remove(id);
   }
 }
