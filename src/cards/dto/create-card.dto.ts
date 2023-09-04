@@ -35,4 +35,8 @@ export class CreateCardDto {
     @IsEnum(CardType)
     @IsNotEmpty()
     CardType: CardType;
+
+    constructor(params?: Partial<CreateCardDto>) {
+        if(params) Object.assign(this, params)
+    };
 }

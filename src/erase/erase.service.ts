@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { CredentialsService } from '../credentials/credentials.service';
 import { CardsService } from '../cards/cards.service';
 import { NotesService } from '../notes/notes.service';
@@ -18,11 +18,11 @@ export class EraseService {
     const { password } = createEraseDto;
     const userPassword = await this.user.findOneWithPassword(user.id)
     const correctPassword = this.user.verifyPassword(password, userPassword.password)
-    if (!correctPassword) throw new ForbiddenException('incorrect password');
+    if (!correctPassword) throw new UnauthorizedException('incorrect password');
 
     await this.cards.removeAll(user.id);
     await this.credentials.removeAll(user.id);
     await this.notes.removeAll(user.id);
-   return await this.user.remove(user.id);
+    return await this.user.remove(user.id);
   }
 }
